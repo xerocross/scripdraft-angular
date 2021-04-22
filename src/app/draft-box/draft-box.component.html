@@ -1,1 +1,36 @@
-<p>draft-box works!</p>
+<style>
+.draft-box-main {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction : column;
+}
+
+.main-textarea {
+    width: 22em;
+    height: 5em;
+    margin-bottom: 1em;
+}
+
+</style>
+
+
+<div class="draft-box-main">
+    <p>Type your beautiful, beautiful words here.</p>
+    <textarea [(ngModel)]="draftText" name="theDraftText" class="main-textarea"></textarea>
+    
+    <div>
+        <p class="btn-group" role="group">
+            <button type="button" class="btn btn-secondary">back</button>
+            <button type="button" class="btn btn-primary" (click) = "commit()">commit</button>
+            <button type="button" class="btn btn-secondary">forward</button>
+        </p>
+    </div>
+    <div>
+        <p class="btn-group" role="group">
+            <button type="button" class="btn btn-warning">reset to last commit</button>
+            <button type="button" class="btn btn-danger">clear all</button>
+        </p>
+    </div>
+    <p>{{ draftText }}</p>
+</div>
