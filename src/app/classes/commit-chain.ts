@@ -1,8 +1,8 @@
 import { chainedInstruction } from "@angular/compiler/src/render3/view/util"
 // @ts-ignore
-import { DraftCommit } from "./commit-chainedInstruction.ts"
+import { DraftCommit } from "./draft-commit"
 
-class CommitChain {
+export class CommitChain {
     commits :DraftCommit[]
 
     push (newCommit: DraftCommit) {
@@ -14,11 +14,16 @@ class CommitChain {
             throw new Error("index out of bounds");
         }
         return this.commits[index];
+
     }
 
     getLast() : DraftCommit {
         let index = this.commits.length - 1;
         return this.commits[index];
+    }
+
+    size() : number {
+        return this.commits.length;
     }
 
 
@@ -37,16 +42,14 @@ class CommitChain {
 
 
     createNewCommit (text : string) : DraftCommit {
-
+        return new DraftCommit(text);
     }
 
 
     addNewCommit(text : string) : void {
 
     }
-
-
-    constructor(commits :DraftCommit[]) {
+    constructor() {
         this.commits = [];
     }
 
