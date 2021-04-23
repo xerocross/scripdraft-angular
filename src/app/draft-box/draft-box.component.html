@@ -30,16 +30,22 @@
     <div>
         <p class="btn-group" role="group">
             <button type="button" 
-                class="btn btn-secondary back-button" 
+                class="btn btn-primary back-button" 
                 [disabled]="!canGoBack"
                 (click) = "goBackOne()"
             >
                 back
             </button>
-            <button type="button" class="btn btn-primary commit" (click) = "commit()">commit</button>
+            <button type="button" 
+                class="btn btn-success commit" 
+                (click) = "commit()"
+                [disabled]="!isDirty"
+            >
+                commit
+            </button>
             
             <button type="button" 
-            class="btn btn-secondary forward-button" 
+            class="btn btn-primary forward-button" 
             [disabled]="!isNextCommit"
             (click) = "goForwardOne()"
             >forward</button>

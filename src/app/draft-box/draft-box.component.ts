@@ -166,9 +166,7 @@ export class DraftBoxComponent implements OnInit {
       this.commitIndex = this.commitIndex + 1;
       this.setIsClean();
     } else if (this.isAtInterior()) {
-      //if(confirm("This action is destructive. It will destroy any commits that are 'forward' from the current one. Do you want to continue with this commit?")) {
-      
-      if (true) {
+      if(confirm("This action is destructive. It will destroy any commits that are 'forward' from the current one. Do you want to continue with this commit?")) {
         let commit = new DraftCommit(this.bufferText);
         let newCommitChain: CommitChain = this.spliceNewCommitChain(commit);
         this.commitChain = newCommitChain;
@@ -177,8 +175,6 @@ export class DraftBoxComponent implements OnInit {
       } else {
         this.sendUserMessage("Commit was canceled. No action taken.")
       }
-
-
     } else {
       throw new Error("this case hasn't been handled yet")
     }
@@ -192,15 +188,35 @@ export class DraftBoxComponent implements OnInit {
 
 
   get canGoBack():boolean {
-    return !this.isDirty && !(this.commitIndex == -1);
+    if (this.isDirty) {
+      return this.commitIndex > 0;
+    } else {
+      // it's clean
+      return this.commitIndex > 0;
+    }
+
+
+    return !this.isDirty && this.commitIndex > 0
+  }
+
+  get existsAtLeastOneCommit() : boolean {
+    return this.numCommits > 0;
   }
 
   get canResetToLastCommit(): boolean {
-    return this.commitIndex > -1 && this.isDirty && (this.commitIndex == this.commitChain.size() - 1);
-  }
+    if (this.isDirty) {
+      // check that there exists at least one commit and 
+      // the current commit in view is at least commit 0.
+      return this.commitIndex > -1
+    } else {
+      // buffer is pristine: there is nothing to reset
+      return false;
+    }
+}
 
   goBackOne(): void {
     if (this.isDirty)  {
+      alert("You have unsaved changes. You must either commit them or reset to the last commit point.");
       return;
     }
 
@@ -216,7 +232,20 @@ export class DraftBoxComponent implements OnInit {
   }
 
   goForwardOne(): void {
+
+
     if (this.isNextCommit) {
+
+      if (this.isDirty) {
+        if (confirm("If you go forward, you will lose unsaved changes currently in the buffer. But there is no way to keep both. Continue?")) {
+          this.isDirty = false;
+        } else {
+          return;
+        }
+      }
+
+
+
       this.bufferBackup = this.bufferText;
       this.commitIndex = this.commitIndex + 1;
       this.updateBuffer();
