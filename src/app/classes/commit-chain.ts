@@ -3,10 +3,22 @@ import { chainedInstruction } from "@angular/compiler/src/render3/view/util"
 import { DraftCommit } from "./draft-commit"
 
 export class CommitChain {
+
+    static getFromArray(array: DraftCommit[]) {
+        let newCommitChain : CommitChain = new CommitChain();
+        newCommitChain.commits = array;
+        return newCommitChain;
+    }
+
+
     commits :DraftCommit[]
 
     push (newCommit: DraftCommit) {
         this.commits.push(newCommit);
+    }
+
+    getCommits () :DraftCommit[] {
+        return this.commits;
     }
 
     get(index : number) : DraftCommit {

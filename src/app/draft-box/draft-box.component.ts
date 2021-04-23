@@ -46,15 +46,36 @@ export class DraftBoxComponent implements OnInit {
     } 
  }
 
-  get positionDescriptor(): string {
-    if (this.commitIndex == -1 && !this.isDirty) {
-      return "No commits, no changes";
-    } else if (this.commitIndex == -1 && this.isDirty) {
-      return "No commits, uncommitted changes."
-    } else if (this.commitIndex >= 0 && this.isDirty) {
-      return "At commit #" + (this.commitIndex + 1) + " with uncommitted changes";
-    } else if (this.commitIndex >= 0 && !this.isDirty) {
-      return "At commit #" + (this.commitIndex + 1) + " with no changes.";
+  // get positionDescriptor(): string {
+  //   if (this.commitIndex == -1 && !this.isDirty) {
+  //     return "No commits, no changes";
+  //   } else if (this.commitIndex == -1 && this.isDirty) {
+  //     return "No commits, uncommitted changes."
+  //   } else if (this.commitIndex >= 0 && this.isDirty) {
+  //     return "At commit " + (this.commitIndex + 1) + " of " + this.numCommits.toString() + " with uncommitted changes";
+  //   } else if (this.commitIndex >= 0 && !this.isDirty) {
+  //     return "At commit " + (this.commitIndex + 1) + " of " + this.numCommits.toString() + " with no changes.";
+  //   } else {
+  //     throw new Error("unexpected condition");
+  //   }
+  // }
+
+
+  get changesDescriptorText(): string {
+    if (this.commitIndex == -1) {
+      return "no changes yet";
+    } else if (this.isDirty) {
+      return "uncommitted changes"
+    } else {
+      return "all changes committed"
+    }
+  }
+
+  get commitPositionText(): string {
+    if (this.commitIndex == -1) {
+      return "No commits";
+    } else if (this.commitIndex >= 0) {
+      return "At commit " + (this.commitIndex + 1) + " of " + this.numCommits.toString()
     } else {
       throw new Error("unexpected condition");
     }
@@ -64,7 +85,7 @@ export class DraftBoxComponent implements OnInit {
 
     if (this.commitIndex == -1 || this.commitChain.size() == this.commitIndex) {
       return this.bufferText;
-      //
+      
     } else if (this.commitIndex < this.commitChain.size()) { 
       return this.commitChain.get(this.commitIndex).getString();
     } else {
@@ -76,7 +97,6 @@ export class DraftBoxComponent implements OnInit {
 
 
   updateBuffer():void {
-    console.log("A","update the buffer");
     this.bufferText = this.getDisplayText(); 
   }
 
@@ -110,6 +130,34 @@ export class DraftBoxComponent implements OnInit {
   }
 
 
+  clearAll() : void {
+    if(confirm("Clear all text and delete all commits?")) {
+
+      this.draftText = "";
+      this.bufferText = "";
+      this. bufferBackup = "";
+      this.isUncommittedChanges = false;
+      this.isDirty = false;
+      this.commitIndex = -1;
+      this.isDirty = false; 
+      this.commitChain = new CommitChain();
+    }
+  }
+
+
+  sendUserMessage (message: string) : void {
+    alert(message);
+  }
+
+
+  spliceNewCommitChain(newCommit : DraftCommit) : CommitChain {
+    let newChainArray = this.commitChain.getCommits().splice(0, this.commitIndex);
+    newChainArray.push(newCommit);
+    let newChain = CommitChain.getFromArray(newChainArray);
+    return newChain;
+  }
+
+
   commit(): void {
     // first, let's assume we are at the tail edge of the commit history
     if (this.isAtTailEdge()) {
@@ -118,7 +166,19 @@ export class DraftBoxComponent implements OnInit {
       this.commitIndex = this.commitIndex + 1;
       this.setIsClean();
     } else if (this.isAtInterior()) {
-      throw new Error("have not handled interior case yet")
+      //if(confirm("This action is destructive. It will destroy any commits that are 'forward' from the current one. Do you want to continue with this commit?")) {
+      
+      if (true) {
+        let commit = new DraftCommit(this.bufferText);
+        let newCommitChain: CommitChain = this.spliceNewCommitChain(commit);
+        this.commitChain = newCommitChain;
+        //this.commitIndex = this.commitIndex + 1;
+        this.isDirty = false;
+      } else {
+        this.sendUserMessage("Commit was canceled. No action taken.")
+      }
+
+
     } else {
       throw new Error("this case hasn't been handled yet")
     }
@@ -136,7 +196,7 @@ export class DraftBoxComponent implements OnInit {
   }
 
   get canResetToLastCommit(): boolean {
-    return this.isDirty && (this.commitIndex == this.commitChain.size() - 1);
+    return this.commitIndex > -1 && this.isDirty && (this.commitIndex == this.commitChain.size() - 1);
   }
 
   goBackOne(): void {
@@ -199,8 +259,8 @@ export class DraftBoxComponent implements OnInit {
 
 
   resetToLatestCommit() : void {
-    let confirmation = confirm("This will erase any uncommitted changes you have made. Keep going?");
-    if (confirmation) {
+    //let confirmation = confirm("This will erase any uncommitted changes you have made. Keep going?");
+    if (true) {
       this.bufferText = this.commitChain.get(this.commitIndex).getString();
       this.setIsClean();
     }

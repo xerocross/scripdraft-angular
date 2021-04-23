@@ -18,9 +18,6 @@
     min-height: 5em;
 }
 </style>
-<p>Index: {{ commitIndex }} </p>
-<p>{{ positionDescriptor }}</p>
-<p>Num Commits: {{ numCommits }}</p>
 <div class="draft-box-main">
     <p>Type your beautiful, beautiful words here.</p>
     <textarea 
@@ -29,19 +26,20 @@
         name="theDraftText" 
         class="main-textarea"
     ></textarea>
-    
+    <p class="position-descriptor"><span class="commit-position">{{ commitPositionText }}</span>, <span class="changes-descriptor">{{ changesDescriptorText }}</span></p>
     <div>
         <p class="btn-group" role="group">
             <button type="button" 
-                class="btn btn-secondary" 
+                class="btn btn-secondary back-button" 
                 [disabled]="!canGoBack"
                 (click) = "goBackOne()"
             >
                 back
             </button>
-            <button type="button" class="btn btn-primary" (click) = "commit()">commit</button>
+            <button type="button" class="btn btn-primary commit" (click) = "commit()">commit</button>
+            
             <button type="button" 
-            class="btn btn-secondary" 
+            class="btn btn-secondary forward-button" 
             [disabled]="!isNextCommit"
             (click) = "goForwardOne()"
             >forward</button>
@@ -51,20 +49,17 @@
     <div>
         <p class="btn-group" role="group">
             <button type="button" 
-            class="btn btn-warning"
+            class="btn btn-warning reset-last-commit"
             [disabled]="!canResetToLastCommit"
             (click) = "resetToLatestCommit()"
             >reset to last commit
         </button>
-        
-        <button type="button" class="btn btn-danger">clear all</button>
+
+        <button type="button" 
+            class="btn btn-danger"
+            (click) = "clearAll()"
+        >clear all</button>
         </p>
 
-    </div>
-    <div *ngIf="isShowPreview" class="preview-outer">
-        <h2>Commit #{{ commitIndex + 1 }}</h2>
-        <div class="preview">
-            <p>{{ displayText }}</p>
-        </div>
     </div>
 </div>
