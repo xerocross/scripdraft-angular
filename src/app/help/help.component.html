@@ -1,24 +1,61 @@
 <div>
-    <p>help works!</p>
-    <div>
-        <h2>Manual</h2>
-        <p>
-            ScripDraft is a plain text editor with a robust undo/redo system loosely inspired by Git. (It's OK if you have never heard of Git.)
-        </p>
+    <div class="manual-content">
+        <div>
+            <p><button (click) = "toggleShowHide()">{{ showOrHideMessage }}</button></p>
+        </div>
+        <div *ngIf="isShow" >
+            <h2>Manual</h2>
 
-        <p>
-            Whenever you click "commit", it creates a kind of save point or a version of your text at that point. You can create these save points at any time while drafting your text with some simple exceptions. We do try to keep you from accidentally clicking "commit" twice and saving the same text twice.
-        </p>
+            
+            <p>
+                ScripDraft is a plain text editor with a robust undo/redo system inspired by Git, but much simpler. (It's OK if you have never heard of Git.)
+            </p>
 
-        <p>
-            After you have created these save points ("commits"), you can review them, clicking the "back" button to see the previous commit or "forward" to view the next commit. Of course, these buttons only apply if there <em>is</em> a previous or a <em>next</em> commit. There would only be a "next" commit if you are currently viewing a past/previous commit.
-        </p>
+            <h3>Overview</h3>
 
-        <h3>Editing from a Commit</h3>
+            <p>
+                Whenever you click "commit", it creates a kind of <em>save point</em>, a version of your text at that point. You can create these save points at any time while drafting your text, except a few special cases added to help avoid mistakes. For example, we do try to keep you from accidentally clicking "commit" twice and saving the same text twice in a row.
+            </p>
 
-        <p>
-            Much like the traditional undo/redo of a text editing application, if you go back and then edit, then you have lost any ability to go "forward" again. Translated into the terms of this app, if you browse backward to a previous commit and then edit that commit
-        </p>
+            <p>
+                After you have created these save points ("commits"), you can review them, clicking the "back" button to see the previous commit or "forward" to view the next commit. Of course, these buttons only apply if there <em>is</em> a previous or a <em>next</em> commit. There would only be a "next" commit if you are currently viewing a past/previous commit.
+            </p>
 
+            <p>
+                You will spend most of your time at the head of the commit chain---that is, at the last edit in the chain, possibly with some unsaved changes. In this case, there is no <em>forward</em> commit, so the forward button is disabled.
+            </p>
+
+            <h3>Primary Editing</h3>
+
+            <p>
+                When the app first starts, there are no commits.
+            </p>
+
+            <p>
+                For various reasons, after you have made some commits, you may want to browse backward through your prior commits and view them, but typically you want to edit only at the tail end of your commit history, thereby creating new information without losing any existing information. To do this, just make sure you click "forward" again until you are on the last commit.
+            </p>
+
+            <p>
+                A message below the text editor will tell you something like "At commit x of x" when you are on the most recent saved commit.
+            </p>
+
+            <h3>Editing from a Past Commit</h3>
+
+            <p>
+                Much like the traditional undo/redo of a text editing application, if you go back and then edit, then you have lost any ability to go "forward" again. Translated into the terms of this app, if you browse backward to a previous commit and then edit that commit, then you are in the position of making a decision.
+            </p>
+            <p> 
+                If you "commit" your change, then it creates a new next commit, and all of the commits you had previously saved <em>future</em>
+                to the present one are gone.
+            </p>
+            <p>
+                If you are looking at an interior commit and you make an edit but you decide you don't want to change the history after all, you can still click the "reset" button. Your changes will be lost, but the commit history will be left as it was before you made any changes.
+            </p>
+
+            <p>
+                In particular, it <em>is not possible</em> to browse backward to a previous commit, edit it, save the changes, and leave the remaining forward commits as-is. That would have been possible, but we decided from an editing point of view that it makes no sense to allow that.
+            </p>
+
+        </div>
     </div>
 </div>
