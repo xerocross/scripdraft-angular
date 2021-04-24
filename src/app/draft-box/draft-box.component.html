@@ -7,21 +7,22 @@
 }
 
 .main-textarea {
-    width: 22em;
-    height: 5em;
+    width: 90%;
+    height: 12em;
     margin-bottom: 1em;
 }
 .preview {
     border-style: solid;
     border-width: 1px;
-    width: 22em;
-    min-height: 5em;
+    width: 50%;
+    min-height: 8em;
 }
 </style>
 <div class="draft-box-main">
     <p>Type your beautiful, beautiful words here.</p>
     <textarea 
         [(ngModel)]="bufferText"
+        #mainEditor
         (ngModelChange)="handleTextChange($event)"
         name="theDraftText" 
         class="main-textarea"

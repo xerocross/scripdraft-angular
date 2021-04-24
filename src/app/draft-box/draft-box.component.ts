@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef,Renderer2, ViewChild } from '@angular/core';
+
+
 import { FormControl } from '@angular/forms';
 // @ts-ignore
 import { DraftCommit } from '../classes/draft-commit';
 // @ts-ignore
 import { CommitChain } from '../classes/commit-chain'
+
 
 @Component({
   selector: 'app-draft-box',
@@ -11,10 +14,10 @@ import { CommitChain } from '../classes/commit-chain'
   styleUrls: ['./draft-box.component.scss']
 })
 export class DraftBoxComponent implements OnInit {
-  
-  
-  //  state
+
   draftText : string = "";
+  @ViewChild('mainEditor') 
+  editor:ElementRef | null = null;
   bufferText : string = "";
   bufferBackup : string = "";
   isUncommittedChanges: boolean = false;
@@ -26,7 +29,7 @@ export class DraftBoxComponent implements OnInit {
   commitChain : CommitChain;
   
 
-  constructor () {
+  constructor (private rd: Renderer2) {
     this.commitChain = new CommitChain();
   }
 
@@ -45,21 +48,6 @@ export class DraftBoxComponent implements OnInit {
       return null;
     } 
  }
-
-  // get positionDescriptor(): string {
-  //   if (this.commitIndex == -1 && !this.isDirty) {
-  //     return "No commits, no changes";
-  //   } else if (this.commitIndex == -1 && this.isDirty) {
-  //     return "No commits, uncommitted changes."
-  //   } else if (this.commitIndex >= 0 && this.isDirty) {
-  //     return "At commit " + (this.commitIndex + 1) + " of " + this.numCommits.toString() + " with uncommitted changes";
-  //   } else if (this.commitIndex >= 0 && !this.isDirty) {
-  //     return "At commit " + (this.commitIndex + 1) + " of " + this.numCommits.toString() + " with no changes.";
-  //   } else {
-  //     throw new Error("unexpected condition");
-  //   }
-  // }
-
 
   get changesDescriptorText(): string {
     if (this.commitIndex == -1) {
@@ -116,11 +104,6 @@ export class DraftBoxComponent implements OnInit {
     }
   }
 
-
-  // private updateText(draftCommit : DraftCommit) : void {
-  //   this.displayText = draftCommit.getString();
-  // }
-
   isAtTailEdge() : boolean {
     return (this.commitIndex == -1 || this.commitChain.size() == this.commitIndex + 1);
   }
@@ -158,6 +141,13 @@ export class DraftBoxComponent implements OnInit {
   }
 
 
+  focusOnEditor() {
+    if (this.editor) {
+      this.editor.nativeElement.focus();
+    }
+  }
+
+
   commit(): void {
     // first, let's assume we are at the tail edge of the commit history
     if (this.isAtTailEdge()) {
@@ -175,9 +165,11 @@ export class DraftBoxComponent implements OnInit {
       } else {
         this.sendUserMessage("Commit was canceled. No action taken.")
       }
+      
     } else {
       throw new Error("this case hasn't been handled yet")
     }
+    this.focusOnEditor();
   }
 
 
@@ -288,10 +280,11 @@ export class DraftBoxComponent implements OnInit {
 
 
   resetToLatestCommit() : void {
-    //let confirmation = confirm("This will erase any uncommitted changes you have made. Keep going?");
-    if (true) {
+    let confirmation = confirm("This will erase any uncommitted changes you have made. Keep going?");
+    if (confirmation) {
       this.bufferText = this.commitChain.get(this.commitIndex).getString();
       this.setIsClean();
+      this.focusOnEditor();
     }
   }
 

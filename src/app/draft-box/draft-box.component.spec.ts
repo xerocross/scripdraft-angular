@@ -24,6 +24,7 @@ describe('DraftBoxComponent', () => {
   let goBack : Function;
   let goForward : Function;
   let updateBuffer : Function;
+  let resetToLastCommit : Function;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -60,6 +61,10 @@ describe('DraftBoxComponent', () => {
       forwardButton.triggerEventHandler('click', null);
     }
 
+    resetToLastCommit = function() {
+      resetLastCommitButton.triggerEventHandler('click', null);
+    }
+
     updateBuffer = function () {
       textarea.value = firstCommitText;
       textarea.dispatchEvent(new Event('input'));
@@ -76,79 +81,27 @@ describe('DraftBoxComponent', () => {
 
 
 
-  it("should create commit when text entered and commit button clicked", fakeAsync(() => {
-    const bufferText = "new buffer text";
-    textarea.value = bufferText;
-    textarea.dispatchEvent(new Event('input'));
-    commitButton.triggerEventHandler('click', null);
-    fixture.detectChanges();
-    tick();
-    expect(component.numCommits).toEqual(1);
-  }));
-
-
-  it("disables back button if no previous commits", () => {
-    const bufferText = "new buffer text";
-    updateBuffer(bufferText);
-    expect(backButton.nativeElement.disabled).toBeTruthy();
-  });
-
-  it("disables forward button if no previous commits", () => {
-    const bufferText = "new buffer text";
-    updateBuffer(bufferText)
-    expect(forwardButton.nativeElement.disabled).toBeTruthy();
-  });
-
-  it("after commit, message should reflect 'at commit 1 of 1'",  fakeAsync(() => {
-    const bufferText = "new buffer text";
-    commit(bufferText);
-    tick();
-    fixture.detectChanges();
-    expect(commitPosition.textContent).toEqual("At commit 1 of 1");
-  }));
-
-  it("display indicates two commits",  fakeAsync(() => {
-    commit("a ");
-    commit("a b ");
-    
-    tick();
-    fixture.detectChanges();
-    expect(commitPosition.textContent).toEqual("At commit 2 of 2");
-  }));
 
 
 
-  it("display indicates one commits when one commit and unsaved changes",  fakeAsync(() => {
-    const bufferText = "new buffer text";
-    // first commit
-    commit(firstCommitText);
-    updateBuffer("a b ")
-    
-    tick();
-    fixture.detectChanges();
-    expect(commitPosition.textContent).toEqual("At commit 1 of 1");
-  }));
-
-
-  it("saves buffer text into commit",  fakeAsync(() => {
-    const originalBufferText = "new buffer text";
-    commit(originalBufferText);
-    expect(component.commitChain.getCommits()[0].commitString).toEqual(originalBufferText);
-  }));
 
 
 
-  it("resets to most recent commit if you discard changes (at tail)",  fakeAsync(() => {
-    spyOn(window, "confirm").and.returnValue(true);
-    const bufferText = "buffer text";
-    commit(bufferText)
-    const bufferTextWithChanges = "new buffer text with changes";
-    updateBuffer(bufferTextWithChanges)
-    resetLastCommitButton.triggerEventHandler('click', null);
-    fixture.detectChanges();
-    tick();
-    expect(textarea.value).toEqual(bufferText);
-  }));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   function getUniqueCommitString(id : number) : string {
@@ -156,169 +109,314 @@ describe('DraftBoxComponent', () => {
   }
 
 
-  it("resets to most recent commit if you discard changes (at mid-position commit) ",  fakeAsync(() => {
-    spyOn(window, "confirm").and.returnValue(true);
-    let numCommits = 8;
-    let innerCommitIndex = 3;
-    const bufferTextWithChanges = "new buffer text with changes";
 
-    for (let i = 0; i < numCommits; i++) {
-      commit(getUniqueCommitString(i));
-    }
 
-    let numBacksteps = (numCommits-1) - innerCommitIndex;
 
-    for (let j = 0; j < numBacksteps; j++) {
+
+
+
+
+
+
+
+
+
+
+
+
+  describe("in regard to the basic functionality of committing changes", ()=> {
+
+      it("saves buffer text into commit",  fakeAsync(() => {
+        const originalBufferText = "new buffer text";
+        commit(originalBufferText);
+        expect(component.commitChain.getCommits()[0].commitString).toEqual(originalBufferText);
+      }));
+
+      it("increments the number of commits when text entered and commit button clicked", fakeAsync(() => {
+        const bufferText = "new buffer text";
+        textarea.value = bufferText;
+        textarea.dispatchEvent(new Event('input'));
+        commitButton.triggerEventHandler('click', null);
+        fixture.detectChanges();
+        tick();
+        expect(component.numCommits).toEqual(1);
+      }));
+
+      it("displays 'at commit 1 of 1' after one commit",  fakeAsync(() => {
+        const bufferText = "new buffer text";
+        commit(bufferText);
+        tick();
+        fixture.detectChanges();
+        expect(commitPosition.textContent).toEqual("At commit 1 of 1");
+      }));
+
+      it("displays two commits when user has made two commits",  fakeAsync(() => {
+        commit("a ");
+        commit("a b ");
+        
+        tick();
+        fixture.detectChanges();
+        expect(commitPosition.textContent).toEqual("At commit 2 of 2");
+      }));
+
+      it("indicates one commit on display when one commit made and unsaved changes",  fakeAsync(() => {
+        const bufferText = "new buffer text";
+        // first commit
+        commit(firstCommitText);
+        updateBuffer("a b ")
+        
+        tick();
+        fixture.detectChanges();
+        expect(commitPosition.textContent).toEqual("At commit 1 of 1");
+      }));
+
+
+      it("indicates two commits when user has made two commits",  fakeAsync(() => {
+        commit("a ");
+        commit("a b ");
+        
+        tick();
+        fixture.detectChanges();
+        expect(commitPosition.textContent).toEqual("At commit 2 of 2");
+      }));
+
+      it("makes no changes if you commit in the middle and cancel when it asks you to confirm",  fakeAsync(() => {
+        spyOn(window, "confirm").and.returnValue(false);
+        commit("1");
+        commit("2");
+        commit("3");
+    
+        goBack();
+        // at second commit now
+    
+        const bufferTextWithChanges = "new buffer text with changes";
+        commit(bufferTextWithChanges);
+        // created a new third commit, which we are on now
+    
+        fixture.detectChanges();
+        tick();
+    
+        expect(commitPosition.textContent).toEqual("At commit 2 of 3");
+        expect(textarea.value).toEqual(bufferTextWithChanges);
+        expect(component.isDirty).toBeTrue();
+      }));
+
+      it("creates a new commit destructively when you commit in the middle and confirm",  fakeAsync(() => {
+        spyOn(window, "confirm").and.returnValue(true);
+    
+        commit("1");
+        commit("2");
+        commit("3");
+    
+        goBack();
+        // at second commit now
+    
+        const bufferTextWithChanges = "new buffer text with changes";
+        commit(bufferTextWithChanges);
+        // created a new third commit, which we are on now
+        fixture.detectChanges();
+        tick();
+        expect(commitPosition.textContent).toEqual("At commit 3 of 3");
+        expect(textarea.value).toEqual(bufferTextWithChanges);
+        expect(component.isDirty).toBeFalse();
+      }));
+    });
+
+
+
+
+
+
+
+  describe("in regard to resetting changes", ()=> {
+
+    it("resets to most recent commit if you discard changes (at tail)",  fakeAsync(() => {
+      spyOn(window, "confirm").and.returnValue(true);
+      const bufferText = "buffer text";
+      commit(bufferText)
+      const bufferTextWithChanges = "new buffer text with changes";
+      updateBuffer(bufferTextWithChanges)
+      resetLastCommitButton.triggerEventHandler('click', null);
+      fixture.detectChanges();
+      tick();
+      expect(textarea.value).toEqual(bufferText);
+    }));
+
+    it("resets to most recent commit if you discard changes (at mid-position commit) ",  fakeAsync(() => {
+      spyOn(window, "confirm").and.returnValue(true);
+      let numCommits = 8;
+      let innerCommitIndex = 3;
+      const bufferTextWithChanges = "new buffer text with changes";
+  
+      for (let i = 0; i < numCommits; i++) {
+        commit(getUniqueCommitString(i));
+      }
+  
+      let numBacksteps = (numCommits-1) - innerCommitIndex;
+  
+      for (let j = 0; j < numBacksteps; j++) {
+        goBack();
+      }
+      // at commit innerCommitIndex now
+  
+      // change buffer text
+      textarea.value = bufferTextWithChanges;
+      textarea.dispatchEvent(new Event('input'));
+      
+      
+      resetLastCommitButton.triggerEventHandler('click', null);
+      fixture.detectChanges();
+      tick();
+  
+      expect(textarea.value).toEqual(getUniqueCommitString(innerCommitIndex));
+    }));
+
+  });
+
+  
+
+
+
+  describe("in regard to the functionality of moving forward and backward", ()=> {
+
+    it("disables forward button if no commits", () => {
+      const bufferText = "new buffer text";
+      updateBuffer(bufferText)
+      expect(forwardButton.nativeElement.disabled).toBeTruthy();
+    });
+    
+    it("disables back button if no commits", () => {
+      const bufferText = "new buffer text";
+      updateBuffer(bufferText);
+      expect(backButton.nativeElement.disabled).toBeTruthy();
+    });
+
+    it("disables the back button if you are viewing the first commit",  fakeAsync(() => {
+
+      commit(firstCommitText);
+      commit(secondCommitText);
+      
       goBack();
-    }
-    // at commit innerCommitIndex now
+      goBack();
+      // should be on first commit now
+      tick();
+      fixture.detectChanges();
+      expect(backButton.nativeElement.disabled).toBeTruthy();
+    }));
 
-    // change buffer text
-    textarea.value = bufferTextWithChanges;
-    textarea.dispatchEvent(new Event('input'));
+    it("displays first commit if you make two commits and then go back to the first one (1)",  fakeAsync(() => {
+      // setup initial references
+      commit(firstCommitText);
+      commit(secondCommitText);
+      goBack();    
+      
+      tick();
+      fixture.detectChanges();
+  
+      expect(commitPosition.textContent).toEqual("At commit 1 of 2");
+    }));
+
+    it("displays first commit if you make two commits and then go back to the first one (2)",  fakeAsync(() => {
+      commit(firstCommitText);
+      commit(secondCommitText);
+      goBack();
+      fixture.detectChanges();
+      tick();
+      expect(textarea.value).toEqual(firstCommitText);
+    }));
+
+    it("displays second commit if you make three commits and then go back once",  fakeAsync(() => {
+      commit(firstCommitText)
+      commit(secondCommitText)
+      commit(thirdCommitText);
+      goBack();
+      fixture.detectChanges();
+      tick();
+  
+      expect(textarea.value).toEqual(secondCommitText);
+    }));
+
+    it("displays displays second commit if you make two, go back one, then forward one",  fakeAsync(() => {
+      let secondCommitText = "a b ";
+      commit("a2")
+      commit(secondCommitText);
+      goBack();
+      goForward();
+      fixture.detectChanges();
+      tick();
+  
+      expect(textarea.value).toEqual(secondCommitText);
+    }));
+
+    it("displays first commit if you make three commits and then go back twice",  fakeAsync(() => {
+      const firstCommitText = "a2";
+      commit(firstCommitText);
+      commit(secondCommitText);
+      commit(thirdCommitText);
+  
+      goBack();
+      goBack();
+      fixture.detectChanges();
+      tick();
+  
+      expect(textarea.value).toEqual(firstCommitText);
+    }));
+
+    it("disables forward if you commit twice, go back once, then go forward once",  fakeAsync(() => {
+      commit(firstCommitText);
+      commit(secondCommitText);
+      goBack();
+      goForward();
+      fixture.detectChanges();
+      tick();
+      expect(forwardButton.nativeElement.disabled).toBeTruthy();
+    }));
+  
+  
+    it("disables forward if you make one commit and leave it there",  fakeAsync(() => {
+      commit(firstCommitText);
+      fixture.detectChanges();
+      tick();
+      expect(forwardButton.nativeElement.disabled).toBeTruthy();
+    }));
+
     
-    
-    resetLastCommitButton.triggerEventHandler('click', null);
-    fixture.detectChanges();
-    tick();
-
-    expect(textarea.value).toEqual(getUniqueCommitString(innerCommitIndex));
-  }));
+  });
 
 
 
-  it("displays first commit if you make two commits and then go back to the first one (1)",  fakeAsync(() => {
-    // setup initial references
-    commit(firstCommitText);
-    commit(secondCommitText);
-    goBack();    
-    
-    tick();
-    fixture.detectChanges();
-
-    expect(commitPosition.textContent).toEqual("At commit 1 of 2");
-  }));
-
-  it("disables the back button if you are viewing the first commit",  fakeAsync(() => {
-
-    commit(firstCommitText);
-    commit(secondCommitText);
-    
-    goBack();
-    goBack();
-    // should be on first commit now
-    tick();
-    fixture.detectChanges();
-    expect(backButton.nativeElement.disabled).toBeTruthy();
-  }));
 
 
-  it("displays first commit if you make two commits and then go back to the first one (2)",  fakeAsync(() => {
-    commit(firstCommitText);
-    commit(secondCommitText);
-    goBack();
-    fixture.detectChanges();
-    tick();
-    expect(textarea.value).toEqual(firstCommitText);
-  }));
 
 
-  it("displays second commit if you make three commits and then go back once",  fakeAsync(() => {
-    commit(firstCommitText)
-    commit(secondCommitText)
-    commit(thirdCommitText);
-    goBack();
-    fixture.detectChanges();
-    tick();
 
-    expect(textarea.value).toEqual(secondCommitText);
-  }));
-
-  it("displays first commit if you make three commits and then go back twice",  fakeAsync(() => {
-    const firstCommitText = "a2";
-    commit(firstCommitText);
-    commit(secondCommitText);
-    commit(thirdCommitText);
-
-    goBack();
-    goBack();
-    fixture.detectChanges();
-    tick();
-
-    expect(textarea.value).toEqual(firstCommitText);
-  }));
-
-  it("displays displays second commit if you make two, go back one, then forward one",  fakeAsync(() => {
-    let secondCommitText = "a b ";
-    commit("a2")
-    commit(secondCommitText);
-    goBack();
-    goForward();
-    fixture.detectChanges();
-    tick();
-
-    expect(textarea.value).toEqual(secondCommitText);
-  }));
+  describe("in regard to re-focusing after an event" , () => {
+    it("focuses on the textarea again after a commit",  fakeAsync(() => {
+      commit("1");
+  
+      fixture.detectChanges();
+      tick();
+  
+  
+      textareaDebug = fixture.debugElement.query(By.css('textarea.main-textarea'));
+      expect(textarea ===  document.activeElement).toBeTrue();
+    }));
+  
+    it("focuses on the textarea again after a reset to last commit",  fakeAsync(() => {
+      spyOn(window, "confirm").and.returnValue(true);
+      commit("first commit");
+      updateBuffer("changes")
+      resetToLastCommit()
+  
+      fixture.detectChanges();
+      tick();
+  
+  
+      textareaDebug = fixture.debugElement.query(By.css('textarea.main-textarea'));
+      expect(textarea ===  document.activeElement).toBeTrue();
+    }));
+  })
 
 
-  it("disables forward if you commit twice, go back once, then go forward once",  fakeAsync(() => {
-    commit(firstCommitText);
-    commit(secondCommitText);
-    goBack();
-    goForward();
-    fixture.detectChanges();
-    tick();
-    expect(forwardButton.nativeElement.disabled).toBeTruthy();
-  }));
-
-
-  it("disables forward if you make one commit and leave it",  fakeAsync(() => {
-    commit(firstCommitText);
-    fixture.detectChanges();
-    tick();
-    expect(forwardButton.nativeElement.disabled).toBeTruthy();
-  }));
-
-
-  it("creates a new commit destructively when you commit in the middle",  fakeAsync(() => {
-    spyOn(window, "confirm").and.returnValue(true);
-
-    commit("1");
-    commit("2");
-    commit("3");
-
-    goBack();
-    // at second commit now
-
-    const bufferTextWithChanges = "new buffer text with changes";
-    commit(bufferTextWithChanges);
-    // created a new third commit, which we are on now
-    fixture.detectChanges();
-    tick();
-    expect(commitPosition.textContent).toEqual("At commit 3 of 3");
-    expect(textarea.value).toEqual(bufferTextWithChanges);
-    expect(component.isDirty).toBeFalse();
-  }));
-
-  it("makes no changes if you commit in the middle and don't confirm",  fakeAsync(() => {
-    spyOn(window, "confirm").and.returnValue(false);
-    commit("1");
-    commit("2");
-    commit("3");
-
-    goBack();
-    // at second commit now
-
-    const bufferTextWithChanges = "new buffer text with changes";
-    commit(bufferTextWithChanges);
-    // created a new third commit, which we are on now
-
-    fixture.detectChanges();
-    tick();
-
-    expect(commitPosition.textContent).toEqual("At commit 2 of 3");
-    expect(textarea.value).toEqual(bufferTextWithChanges);
-    expect(component.isDirty).toBeTrue();
-  }));
 
 });
