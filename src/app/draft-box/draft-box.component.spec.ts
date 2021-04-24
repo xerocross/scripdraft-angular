@@ -129,7 +129,7 @@ describe('DraftBoxComponent', () => {
       it("saves buffer text into commit",  fakeAsync(() => {
         const originalBufferText = "new buffer text";
         commit(originalBufferText);
-        expect(component.commitChain.getCommits()[0].commitString).toEqual(originalBufferText);
+        expect(component.commitsList.getCommits()[0].commitString).toEqual(originalBufferText);
       }));
 
       it("increments the number of commits when text entered and commit button clicked", fakeAsync(() => {
@@ -198,7 +198,7 @@ describe('DraftBoxComponent', () => {
     
         expect(commitPosition.textContent).toEqual("At commit 2 of 3");
         expect(textarea.value).toEqual(bufferTextWithChanges);
-        expect(component.isDirty).toBeTrue();
+        expect(component.isBufferContainsUncommittedChanges).toBeTrue();
       }));
 
       it("creates a new commit destructively when you commit in the middle and confirm",  fakeAsync(() => {
@@ -218,7 +218,7 @@ describe('DraftBoxComponent', () => {
         tick();
         expect(commitPosition.textContent).toEqual("At commit 3 of 3");
         expect(textarea.value).toEqual(bufferTextWithChanges);
-        expect(component.isDirty).toBeFalse();
+        expect(component.isBufferContainsUncommittedChanges).toBeFalse();
       }));
     });
 
@@ -336,9 +336,9 @@ describe('DraftBoxComponent', () => {
       expect(textarea.value).toEqual(secondCommitText);
     }));
 
-    it("displays displays second commit if you make two, go back one, then forward one",  fakeAsync(() => {
-      let secondCommitText = "a b ";
-      commit("a2")
+    it("displays second commit if you make two, go back one, then forward one",  fakeAsync(() => {
+
+      commit(firstCommitText)
       commit(secondCommitText);
       goBack();
       goForward();

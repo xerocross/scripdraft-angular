@@ -1,17 +1,29 @@
 <div>
     <div class="manual-content">
         <div>
-            <p><button (click) = "toggleShowHide()">{{ showOrHideMessage }}</button></p>
+            <p><button class="btn btn-info" 
+                (click) = "toggleShowHide()"
+            >
+                {{ showOrHideMessage }}
+            </button>
+        </p>
         </div>
         <div *ngIf="isShow" >
             <h2>Manual</h2>
 
             
             <p>
-                ScripDraft is a plain text editor with a robust undo/redo system inspired by Git, but much simpler. (It's OK if you have never heard of Git.)
+                ScripDraft is a plain text editor with a more robust undo/redo system than typical. You choose "save" points by clicking the "commit" button. Then you can easily browse backward (undo) and forward (redo) until your test is just right.
             </p>
+            <div>
+                <ol>
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#editing">Primary Editing</a></li>
+                    <li><a href="#destructiveEditing">Editing from a Past Commit</a></li>
+                </ol>
+            </div>
 
-            <h3>Overview</h3>
+            <h3><a name="overview">Overview</a></h3>
 
             <p>
                 Whenever you click "commit", it creates a kind of <em>save point</em>, a version of your text at that point. You can create these save points at any time while drafting your text, except a few special cases added to help avoid mistakes. For example, we do try to keep you from accidentally clicking "commit" twice and saving the same text twice in a row.
@@ -25,7 +37,7 @@
                 You will spend most of your time at the head of the commit chain---that is, at the last edit in the chain, possibly with some unsaved changes. In this case, there is no <em>forward</em> commit, so the forward button is disabled.
             </p>
 
-            <h3>Primary Editing</h3>
+            <h3><a name="editing">Primary Editing</a></h3>
 
             <p>
                 When the app first starts, there are no commits.
@@ -39,7 +51,7 @@
                 A message below the text editor will tell you something like "At commit x of x" when you are on the most recent saved commit.
             </p>
 
-            <h3>Editing from a Past Commit</h3>
+            <h3><a name="destructiveEditing">Editing from a Past Commit</a></h3>
 
             <p>
                 Much like the traditional undo/redo of a text editing application, if you go back and then edit, then you have lost any ability to go "forward" again. Translated into the terms of this app, if you browse backward to a previous commit and then edit that commit, then you are in the position of making a decision.

@@ -15,115 +15,123 @@ import { CommitChain } from '../classes/commit-chain'
 })
 export class DraftBoxComponent implements OnInit {
 
-  draftText : string = "";
   @ViewChild('mainEditor') 
   editor:ElementRef | null = null;
+
+
+  log : Function = function(message:string){
+    console.log(message);
+  }
+
+  draftText : string = "";
   bufferText : string = "";
   bufferBackup : string = "";
-  isUncommittedChanges: boolean = false;
-  commitIndex : number = -1;
-  isDirty : boolean = false; // to capture whether text of a commit has been changed.
-
-
-  // commit history
-  commitChain : CommitChain;
+  commitUserIsLookingAt : number = -1;
+  isBufferContainsUncommittedChanges : boolean = false; // to capture whether text of a commit has been changed.
+  commitsList : CommitChain;
   
 
+  copyText : any = {
+    confirmGoForwardWithLossUnsavedChanges : "If you go forward, you will lose unsaved changes currently in the buffer. But there is no way to keep both. Continue?",
+    alertCanNotGoBackWithUnsavedChanges : "You have unsaved changes. You must either commit them or reset to the last commit point.",
+    confirmDestructiveInnerCommitWarning : "This action is destructive. It will destroy any commits that are 'forward' from the current one. Do you want to continue with this commit?",
+    confirmDestructiveClearAll : "Clear all text and delete all commits?",
+    commitCancelledAlert : "Commit was canceled. No action taken.",
+    noChangesYet : "no changes yet",
+    uncommittedChanges : "uncommitted changes",
+    allChangesCommitted : "all changes committed",
+    noCommits : "no commits",
+    cannotGoBack : "Cannot go back from here."
+  }
+
+  errorMessages : any = {
+    unexpectedCondition : "An unexpected condition has occurred."
+  }
+
+
+
   constructor (private rd: Renderer2) {
-    this.commitChain = new CommitChain();
+    this.commitsList = new CommitChain();
+  }
+
+
+  private getMessageAtCommit(atCommit : number, ofCommits : number) : string {
+    return "At commit " + atCommit + " of " + ofCommits;
+  }
+
+
+  private isThereAreNoCommitsYet() {
+    return this.commitUserIsLookingAt == -1;
+  }
+
+  private isAtTailEdge() : boolean {
+    return (this.isThereAreNoCommitsYet() || this.commitsList.size() == this.commitUserIsLookingAt + 1);
+  }
+
+  private isUserViewingInteriorCommit() : boolean {
+    return (!this.isThereAreNoCommitsYet() // rule out case of no commits
+      && this.commitUserIsLookingAt < this.commitsList.size());
   }
 
   get numCommits() :number {
-    return this.commitChain.size();
-  }
-
-  get isShowPreview(): boolean {
-    return this.commitIndex > -1;
+    return this.commitsList.size();
   }
 
   get currentDraftCommit() : any {
-    if (this.commitIndex >= 0) {
-      this.commitChain.get(this.commitIndex);
+    if (this.commitUserIsLookingAt >= 0) {
+      this.commitsList.get(this.commitUserIsLookingAt);
     } else {
       return null;
     } 
  }
 
   get changesDescriptorText(): string {
-    if (this.commitIndex == -1) {
-      return "no changes yet";
-    } else if (this.isDirty) {
-      return "uncommitted changes"
-    } else {
-      return "all changes committed"
+    if (this.isThereAreNoCommitsYet()) {
+      return this.copyText.noChangesYet;
+    } else if (this.isBufferContainsUncommittedChanges) {
+      return this.copyText.uncommittedChanges;
+    } else { // viewing a pristine commit
+      return this.copyText.allChangesCommitted;
     }
   }
 
   get commitPositionText(): string {
-    if (this.commitIndex == -1) {
-      return "No commits";
-    } else if (this.commitIndex >= 0) {
-      return "At commit " + (this.commitIndex + 1) + " of " + this.numCommits.toString()
+    if (this.commitUserIsLookingAt == -1) {
+      return this.copyText.noCommits;
+    } else if (this.commitUserIsLookingAt >= 0) {
+      return this.getMessageAtCommit(this.commitUserIsLookingAt + 1, this.numCommits);
     } else {
-      throw new Error("unexpected condition");
-    }
-  }
-
-  get displayText() : string {
-
-    if (this.commitIndex == -1 || this.commitChain.size() == this.commitIndex) {
-      return this.bufferText;
-      
-    } else if (this.commitIndex < this.commitChain.size()) { 
-      return this.commitChain.get(this.commitIndex).getString();
-    } else {
-      throw new Error("unexpected event");
+      throw new Error(this.errorMessages.unexpectedCondition);
     }
   }
 
 
-
-
-  updateBuffer():void {
+  private updateBuffer():void {
     this.bufferText = this.getDisplayText(); 
   }
 
-  getDisplayText(): string {
-    console.log("commitChain.size", this.commitChain.size());
-    console.log("commitIndex", this.commitIndex);
-    if (this.commitIndex == -1 || this.commitChain.size() == this.commitIndex) {
-      console.log("this", this.commitChain.size());
-      return this.bufferText;
-      
-      //
-    } else if (this.commitIndex < this.commitChain.size()) { 
-      console.log("that");
-      return this.commitChain.get(this.commitIndex).getString();
+  private getDisplayText(): string {
+    if (this.commitUserIsLookingAt < this.commitsList.size()) { 
+      return this.commitsList.get(this.commitUserIsLookingAt).getString();
     } else {
-      throw new Error("unexpected event");
+      throw new Error(this.errorMessages.unexpectedCondition);
     }
   }
 
-  isAtTailEdge() : boolean {
-    return (this.commitIndex == -1 || this.commitChain.size() == this.commitIndex + 1);
-  }
-
-  isAtInterior() : boolean {
-    return (0 <= this.commitIndex && this.commitIndex < this.commitChain.size());
+  get isClearAllAllowed() : boolean {
+    return this.isBufferContainsUncommittedChanges || this.numCommits > 0;
   }
 
 
   clearAll() : void {
-    if(confirm("Clear all text and delete all commits?")) {
-
+    if(confirm(this.copyText.confirmDestructiveClearAll)) {
       this.draftText = "";
       this.bufferText = "";
       this. bufferBackup = "";
-      this.isUncommittedChanges = false;
-      this.isDirty = false;
-      this.commitIndex = -1;
-      this.isDirty = false; 
-      this.commitChain = new CommitChain();
+      this.isBufferContainsUncommittedChanges = false;
+      this.commitUserIsLookingAt = -1;
+      this.isBufferContainsUncommittedChanges = false; 
+      this.commitsList = new CommitChain();
     }
   }
 
@@ -133,156 +141,152 @@ export class DraftBoxComponent implements OnInit {
   }
 
 
-  spliceNewCommitChain(newCommit : DraftCommit) : CommitChain {
-    let newChainArray = this.commitChain.getCommits().splice(0, this.commitIndex + 1);
+  private spliceNewCommitChain(newCommit : DraftCommit) : CommitChain {
+    let newChainArray = this.commitsList.getCommits().splice(0, this.commitUserIsLookingAt + 1);
     newChainArray.push(newCommit);
     let newChain = CommitChain.getFromArray(newChainArray);
     return newChain;
   }
 
 
-  focusOnEditor() {
+  private focusOnEditor() {
     if (this.editor) {
       this.editor.nativeElement.focus();
     }
   }
 
 
+  // tail edge includes the case of no commits yet
+  private commitAtTailEdge() : void {
+    let draftCommit = new DraftCommit(this.bufferText);
+    this.commitsList.push(draftCommit);
+    this.commitUserIsLookingAt = this.commitUserIsLookingAt + 1;
+    this.setIsClean();
+  }
+
+
+
+  private commitNewAtInteriorDestructive() : void {
+    let commit = new DraftCommit(this.bufferText);
+    let newCommitChain: CommitChain = this.spliceNewCommitChain(commit);
+    this.commitsList = newCommitChain;
+    this.commitUserIsLookingAt = this.commitUserIsLookingAt + 1;
+    this.isBufferContainsUncommittedChanges = false;
+  }
+
+
   commit(): void {
-    // first, let's assume we are at the tail edge of the commit history
     if (this.isAtTailEdge()) {
-      let draftCommit = new DraftCommit(this.bufferText);
-      this.commitChain.push(draftCommit);
-      this.commitIndex = this.commitIndex + 1;
-      this.setIsClean();
-    } else if (this.isAtInterior()) {
-      if(confirm("This action is destructive. It will destroy any commits that are 'forward' from the current one. Do you want to continue with this commit?")) {
-        let commit = new DraftCommit(this.bufferText);
-        let newCommitChain: CommitChain = this.spliceNewCommitChain(commit);
-        this.commitChain = newCommitChain;
-        this.commitIndex = this.commitIndex + 1;
-        this.isDirty = false;
+      this.commitAtTailEdge();
+    } else if (this.isUserViewingInteriorCommit()) {
+      if(confirm(this.copyText.confirmDestructiveInnerCommitWarning)) {
+        this.commitNewAtInteriorDestructive();
       } else {
-        this.sendUserMessage("Commit was canceled. No action taken.")
+        this.sendUserMessage(this.copyText.commitCancelledAlert)
       }
-      
     } else {
-      throw new Error("this case hasn't been handled yet")
+      throw new Error(this.errorMessages.unexpectedCondition);
     }
     this.focusOnEditor();
   }
 
 
   handleTextChange(newText : string) {
-    console.log("event:" + newText);
     this.setIsDirty();
   }
 
 
   get canGoBack():boolean {
-    if (this.isDirty) {
-      return this.commitIndex > 0;
+    if (this.isBufferContainsUncommittedChanges) {
+      return this.commitUserIsLookingAt > 0;
+      // in this case, user receives a tip message, and then there is no further effect,
+      // handled inside the goBackOne method
     } else {
-      // it's clean
-      return this.commitIndex > 0;
+      // buffer is clean
+      return this.commitUserIsLookingAt > 0;
     }
-
-
-    return !this.isDirty && this.commitIndex > 0
   }
+
+  get canGoForward() : boolean {
+    return this.existsNextCommit;
+  }
+
 
   get existsAtLeastOneCommit() : boolean {
     return this.numCommits > 0;
   }
 
   get canResetToLastCommit(): boolean {
-    if (this.isDirty) {
+    if (this.isBufferContainsUncommittedChanges) {
       // check that there exists at least one commit and 
       // the current commit in view is at least commit 0.
-      return this.commitIndex > -1
+      return this.commitUserIsLookingAt > -1
     } else {
       // buffer is pristine: there is nothing to reset
       return false;
     }
-}
+  }
+
+  get existsNextCommit(): boolean {
+    let size = this.commitsList.size();
+    return this.commitUserIsLookingAt < size - 1;
+  }
 
   goBackOne(): void {
-    if (this.isDirty)  {
-      alert("You have unsaved changes. You must either commit them or reset to the last commit point.");
+    if (this.isBufferContainsUncommittedChanges)  {
+      alert(this.copyText.alertCanNotGoBackWithUnsavedChanges);
       return;
     }
 
-    if (this.commitIndex > 0 ) {
+    if (this.commitUserIsLookingAt > 0 ) {
       this.bufferBackup = this.bufferText;
-      if (this.isDirty) {
-        this.isUncommittedChanges = true;
-      }
-      this.commitIndex = this.commitIndex - 1;
+      this.commitUserIsLookingAt = this.commitUserIsLookingAt - 1;
       this.updateBuffer();
       this.setIsClean();
+    } else {
+      // the button should be disabled so this condition should never occur.
+      // but this is not a fatal error
+      this.log("unexpected condition: 0A8D825C-85F4-4B58-9AB6-78D1621E423F");
+      alert(this.copyText.cannotGoBack);
     }
   }
 
   goForwardOne(): void {
-
-
-    if (this.isNextCommit) {
-
-      if (this.isDirty) {
-        if (confirm("If you go forward, you will lose unsaved changes currently in the buffer. But there is no way to keep both. Continue?")) {
-          this.isDirty = false;
+    if (this.existsNextCommit) {
+      if (this.isBufferContainsUncommittedChanges) {
+        if (confirm(this.copyText.confirmGoForwardWithLossUnsavedChanges)) {
+          this.isBufferContainsUncommittedChanges = false;
         } else {
-          return;
+          return; // do nothing
         }
       }
-
-
-
       this.bufferBackup = this.bufferText;
-      this.commitIndex = this.commitIndex + 1;
+      this.commitUserIsLookingAt = this.commitUserIsLookingAt + 1;
       this.updateBuffer();
-    } else if (this.isUncommittedChanges) {
-        this.showUncommittedChanges();
+    } else {
+        // the button is disabled and this should never happen
+        // but it is not a fatal error. Instead, log
+        this.log("unexpected event: ED892479-9E6C-483C-9F77-5E4911B70163")
     }
   }
 
-  // get isUnsavedChanges(): boolean {
-  //   console.log("soupy")
-  //   if (!this.isNextCommit) {
-  //     return this.isUncommittedChanges;
-  //   } else {
-  //     return false;
-  //   }
-  // }
-
   showUncommittedChanges(): void {
-
     this.bufferText = this.bufferBackup;
-    console.log("UncommittedChanges", this.bufferBackup);
     this.setIsDirty();
   }
 
-
-  get isNextCommit(): boolean {
-    let size = this.commitChain.size();
-    return this.commitIndex < size - 1;
-  }
-
-
-  setIsDirty(): void {
-    this.isDirty = true;
+  private setIsDirty(): void {
+    this.isBufferContainsUncommittedChanges = true;
   }
 
   setIsClean(): void {
-    this.isDirty = false;
+    this.isBufferContainsUncommittedChanges = false;
   }
-
-
 
   resetToLatestCommit() : void {
     let confirmation = confirm("This will erase any uncommitted changes you have made. Keep going?");
     if (confirmation) {
-      this.bufferText = this.commitChain.get(this.commitIndex).getString();
+      this.bufferText = this.commitsList.get(this.commitUserIsLookingAt).getString();
       this.setIsClean();
       this.focusOnEditor();
     }

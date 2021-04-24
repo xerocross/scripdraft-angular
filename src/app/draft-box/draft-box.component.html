@@ -1,31 +1,28 @@
 <style>
 .draft-box-main {
-    width: 70%;
+    width: 100%;
     display: flex;
     align-items: center;
     flex-direction : column;
 }
 
 .main-textarea {
-    width: 90%;
+    width: 95%;
     height: 12em;
     margin-bottom: 1em;
 }
-.preview {
-    border-style: solid;
-    border-width: 1px;
-    width: 50%;
-    min-height: 8em;
+.subtitle {
+    font-size: 15pt;
 }
 </style>
 <div class="draft-box-main">
-    <p>Type your beautiful, beautiful words here.</p>
+    <p class="subtitle">Type your beautiful, beautiful words here.</p>
     <textarea 
         [(ngModel)]="bufferText"
         #mainEditor
         (ngModelChange)="handleTextChange($event)"
         name="theDraftText" 
-        class="main-textarea"
+        class="main-textarea form-control"
     ></textarea>
     <p class="position-descriptor"><span class="commit-position">{{ commitPositionText }}</span>, <span class="changes-descriptor">{{ changesDescriptorText }}</span></p>
     <div>
@@ -40,14 +37,14 @@
             <button type="button" 
                 class="btn btn-success commit" 
                 (click) = "commit()"
-                [disabled]="!isDirty"
+                [disabled]="!isBufferContainsUncommittedChanges"
             >
                 commit
             </button>
             
             <button type="button" 
             class="btn btn-primary forward-button" 
-            [disabled]="!isNextCommit"
+            [disabled]="!existsNextCommit"
             (click) = "goForwardOne()"
             >forward</button>
         </p>
@@ -62,7 +59,8 @@
             >reset to last commit
         </button>
 
-        <button type="button" 
+        <button type="button"
+            [disabled]="!isClearAllAllowed"
             class="btn btn-danger"
             (click) = "clearAll()"
         >clear all</button>
