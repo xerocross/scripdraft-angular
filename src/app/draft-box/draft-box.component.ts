@@ -151,7 +151,7 @@ export class DraftBoxComponent implements OnInit {
 
 
   spliceNewCommitChain(newCommit : DraftCommit) : CommitChain {
-    let newChainArray = this.commitChain.getCommits().splice(0, this.commitIndex);
+    let newChainArray = this.commitChain.getCommits().splice(0, this.commitIndex + 1);
     newChainArray.push(newCommit);
     let newChain = CommitChain.getFromArray(newChainArray);
     return newChain;
@@ -170,7 +170,7 @@ export class DraftBoxComponent implements OnInit {
         let commit = new DraftCommit(this.bufferText);
         let newCommitChain: CommitChain = this.spliceNewCommitChain(commit);
         this.commitChain = newCommitChain;
-        //this.commitIndex = this.commitIndex + 1;
+        this.commitIndex = this.commitIndex + 1;
         this.isDirty = false;
       } else {
         this.sendUserMessage("Commit was canceled. No action taken.")
