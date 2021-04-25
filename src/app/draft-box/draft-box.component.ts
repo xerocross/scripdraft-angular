@@ -1,12 +1,16 @@
 import { Component, OnInit, ElementRef,Renderer2, ViewChild } from '@angular/core';
 
-
-import { FormControl } from '@angular/forms';
 // @ts-ignore
-import { DraftCommit } from '../classes/draft-commit';
+import { DraftCommit } from '../classes/draft-commit.ts';
 // @ts-ignore
-import { CommitChain } from '../classes/commit-chain'
+import { CommitChain } from '../classes/commit-chain.ts';
+// @ts-ignore
+import { LocalStorageHelper } from '../classes/local-storage-helper.ts';
+// // @ts-ignore
+// import { GuidHelper } from '../classes/guid-helper.ts';
 
+// @ts-ignore
+import { GuidService } from '../guid.service';
 
 @Component({
   selector: 'app-draft-box',
@@ -17,15 +21,15 @@ export class DraftBoxComponent implements OnInit {
 
   @ViewChild('mainEditor') 
   editor:ElementRef | null = null;
-
+  localStorageHelper : LocalStorageHelper = new LocalStorageHelper();
 
   log : Function = function(message:string){
     console.log(message);
   }
 
-  draftText : string = "";
+  guidService : GuidService;
+  guid: string;
   bufferText : string = "";
-  bufferBackup : string = "";
   commitUserIsLookingAt : number = -1;
   isBufferContainsUncommittedChanges : boolean = false; // to capture whether text of a commit has been changed.
   commitsList : CommitChain;
@@ -48,10 +52,10 @@ export class DraftBoxComponent implements OnInit {
     unexpectedCondition : "An unexpected condition has occurred."
   }
 
-
-
-  constructor (private rd: Renderer2) {
+  constructor (private rd: Renderer2, guidService :GuidService) {
     this.commitsList = new CommitChain();
+    this.guidService = guidService;
+    this.guid = guidService.getGuid();
   }
 
 
@@ -73,6 +77,18 @@ export class DraftBoxComponent implements OnInit {
       && this.commitUserIsLookingAt < this.commitsList.size());
   }
 
+  private updateBuffer():void {
+    this.bufferText = this.getDisplayText(); 
+  }
+
+  private getDisplayText(): string {
+    if (this.commitUserIsLookingAt < this.commitsList.size()) { 
+      return this.commitsList.get(this.commitUserIsLookingAt).getString();
+    } else {
+      throw new Error(this.errorMessages.unexpectedCondition);
+    }
+  }
+
   get numCommits() :number {
     return this.commitsList.size();
   }
@@ -83,14 +99,15 @@ export class DraftBoxComponent implements OnInit {
     } else {
       return null;
     } 
- }
+  }
 
   get changesDescriptorText(): string {
     if (this.isThereAreNoCommitsYet()) {
       return this.copyText.noChangesYet;
     } else if (this.isBufferContainsUncommittedChanges) {
       return this.copyText.uncommittedChanges;
-    } else { // viewing a pristine commit
+    } else { 
+      // viewing a pristine commit
       return this.copyText.allChangesCommitted;
     }
   }
@@ -105,19 +122,6 @@ export class DraftBoxComponent implements OnInit {
     }
   }
 
-
-  private updateBuffer():void {
-    this.bufferText = this.getDisplayText(); 
-  }
-
-  private getDisplayText(): string {
-    if (this.commitUserIsLookingAt < this.commitsList.size()) { 
-      return this.commitsList.get(this.commitUserIsLookingAt).getString();
-    } else {
-      throw new Error(this.errorMessages.unexpectedCondition);
-    }
-  }
-
   get isClearAllAllowed() : boolean {
     return this.isBufferContainsUncommittedChanges || this.numCommits > 0;
   }
@@ -125,15 +129,31 @@ export class DraftBoxComponent implements OnInit {
 
   clearAll() : void {
     if(confirm(this.copyText.confirmDestructiveClearAll)) {
-      this.draftText = "";
       this.bufferText = "";
-      this. bufferBackup = "";
       this.isBufferContainsUncommittedChanges = false;
       this.commitUserIsLookingAt = -1;
       this.isBufferContainsUncommittedChanges = false; 
       this.commitsList = new CommitChain();
     }
   }
+
+
+  saveData () : void {
+    let cleanObject : any = this.getCleanObject();
+    console.log(cleanObject);
+    this.localStorageHelper.saveAppData(cleanObject);
+  }
+
+  getCleanObject() : any {
+    let cleanObject : any = {};
+    cleanObject["bufferText"] = this.bufferText;
+    cleanObject["guid"] = this.guid;
+    cleanObject["isBufferContainsUncommittedChanges"]   = this.isBufferContainsUncommittedChanges;
+    cleanObject["commits"] = this.commitsList.getCleanObject();
+    cleanObject["commitUserIsLookingAt"] = this.commitUserIsLookingAt;
+    return cleanObject;
+  }
+
 
 
   sendUserMessage (message: string) : void {
@@ -193,6 +213,7 @@ export class DraftBoxComponent implements OnInit {
 
   handleTextChange(newText : string) {
     this.setIsDirty();
+    let dataObj = this.saveData();
   }
 
 
@@ -239,7 +260,6 @@ export class DraftBoxComponent implements OnInit {
     }
 
     if (this.commitUserIsLookingAt > 0 ) {
-      this.bufferBackup = this.bufferText;
       this.commitUserIsLookingAt = this.commitUserIsLookingAt - 1;
       this.updateBuffer();
       this.setIsClean();
@@ -260,19 +280,13 @@ export class DraftBoxComponent implements OnInit {
           return; // do nothing
         }
       }
-      this.bufferBackup = this.bufferText;
       this.commitUserIsLookingAt = this.commitUserIsLookingAt + 1;
       this.updateBuffer();
     } else {
         // the button is disabled and this should never happen
         // but it is not a fatal error. Instead, log
-        this.log("unexpected event: ED892479-9E6C-483C-9F77-5E4911B70163")
+        this.log("unexpected event: ED892479-9E6C-483C-9F77-5E4911B70163");
     }
-  }
-
-  showUncommittedChanges(): void {
-    this.bufferText = this.bufferBackup;
-    this.setIsDirty();
   }
 
   private setIsDirty(): void {

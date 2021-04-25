@@ -10,8 +10,12 @@ export class CommitChain {
         return newCommitChain;
     }
 
-
     commits :DraftCommit[]
+
+
+    constructor() {
+        this.commits = [];
+    }
 
     push (newCommit: DraftCommit) {
         this.commits.push(newCommit);
@@ -57,12 +61,17 @@ export class CommitChain {
         return new DraftCommit(text);
     }
 
-
     addNewCommit(text : string) : void {
-
-    }
-    constructor() {
-        this.commits = [];
     }
 
+    getCleanObject() : any {
+        let cleanObject : any = {};
+        let cleanCommitsArray = [];
+        for (let commit of this.commits) {
+            
+            cleanCommitsArray.push(commit.getCleanObject());
+        }
+        cleanObject["commits"] = cleanCommitsArray;
+        return cleanObject;
+    }
 }
