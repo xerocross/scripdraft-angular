@@ -1,6 +1,6 @@
 export class LocalStorageFacade {
 
-    write (key: string, value: string) : boolean {
+    static write (key: string, value: string) : boolean {
         if (localStorage) {
             localStorage.setItem(key, value);
             return true;
@@ -8,7 +8,7 @@ export class LocalStorageFacade {
         return false;
     }
 
-    read (key: string) : string | null {
+    static read (key: string) : string | null {
         if (localStorage) {
             return localStorage.getItem(key);
         }

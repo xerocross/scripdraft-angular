@@ -9,8 +9,11 @@ import { LocalStorageHelper } from '../classes/local-storage-helper.ts';
 // // @ts-ignore
 // import { GuidHelper } from '../classes/guid-helper.ts';
 
-// @ts-ignore
 import { GuidService } from '../guid.service';
+
+import { LocalStorageService } from "../local-storage.service"
+
+
 
 @Component({
   selector: 'app-draft-box',
@@ -21,14 +24,12 @@ export class DraftBoxComponent implements OnInit {
 
   @ViewChild('mainEditor') 
   editor:ElementRef | null = null;
-  localStorageHelper : LocalStorageHelper = new LocalStorageHelper();
 
   log : Function = function(message:string){
     console.log(message);
   }
 
-  guidService : GuidService;
-  guid: string;
+  guid: string = "";
   bufferText : string = "";
   commitUserIsLookingAt : number = -1;
   isBufferContainsUncommittedChanges : boolean = false; // to capture whether text of a commit has been changed.
@@ -45,17 +46,23 @@ export class DraftBoxComponent implements OnInit {
     uncommittedChanges : "uncommitted changes",
     allChangesCommitted : "all changes committed",
     noCommits : "no commits",
-    cannotGoBack : "Cannot go back from here."
+    cannotGoBack : "Cannot go back from here.",
+    confirmResetToLatest: "This will erase any uncommitted changes you have made. Keep going?"
   }
 
   errorMessages : any = {
     unexpectedCondition : "An unexpected condition has occurred."
   }
 
-  constructor (private rd: Renderer2, guidService :GuidService) {
+  constructor (private rd: Renderer2, private guidService: GuidService, private localStorageService : LocalStorageService) {
     this.commitsList = new CommitChain();
     this.guidService = guidService;
-    this.guid = guidService.getGuid();
+    this.localStorageService = localStorageService;
+  }
+
+  ngOnInit(): void {
+    this.guid = this.guidService.getGuid();
+    this.loadSavedAppData();
   }
 
 
@@ -134,6 +141,7 @@ export class DraftBoxComponent implements OnInit {
       this.commitUserIsLookingAt = -1;
       this.isBufferContainsUncommittedChanges = false; 
       this.commitsList = new CommitChain();
+      this.saveData()
     }
   }
 
@@ -141,7 +149,7 @@ export class DraftBoxComponent implements OnInit {
   saveData () : void {
     let cleanObject : any = this.getCleanObject();
     console.log(cleanObject);
-    this.localStorageHelper.saveAppData(cleanObject);
+    this.localStorageService.saveAppData(cleanObject);
   }
 
   getCleanObject() : any {
@@ -198,9 +206,11 @@ export class DraftBoxComponent implements OnInit {
   commit(): void {
     if (this.isAtTailEdge()) {
       this.commitAtTailEdge();
+      this.saveData()
     } else if (this.isUserViewingInteriorCommit()) {
       if(confirm(this.copyText.confirmDestructiveInnerCommitWarning)) {
         this.commitNewAtInteriorDestructive();
+        this.saveData()
       } else {
         this.sendUserMessage(this.copyText.commitCancelledAlert)
       }
@@ -263,6 +273,7 @@ export class DraftBoxComponent implements OnInit {
       this.commitUserIsLookingAt = this.commitUserIsLookingAt - 1;
       this.updateBuffer();
       this.setIsClean();
+      this.saveData()
     } else {
       // the button should be disabled so this condition should never occur.
       // but this is not a fatal error
@@ -282,6 +293,7 @@ export class DraftBoxComponent implements OnInit {
       }
       this.commitUserIsLookingAt = this.commitUserIsLookingAt + 1;
       this.updateBuffer();
+      this.saveData()
     } else {
         // the button is disabled and this should never happen
         // but it is not a fatal error. Instead, log
@@ -298,16 +310,43 @@ export class DraftBoxComponent implements OnInit {
   }
 
   resetToLatestCommit() : void {
-    let confirmation = confirm("This will erase any uncommitted changes you have made. Keep going?");
+    let confirmation = confirm(this.copyText.confirmResetToLatest);
     if (confirmation) {
       this.bufferText = this.commitsList.get(this.commitUserIsLookingAt).getString();
       this.setIsClean();
       this.focusOnEditor();
+      this.saveData()
     }
   }
 
 
-  ngOnInit(): void {
-  }
+  // getCleanObject() : any {
+  //   let cleanObject : any = {};
+  //   cleanObject["bufferText"] = this.bufferText;
+  //   cleanObject["guid"] = this.guid;
+  //   cleanObject["isBufferContainsUncommittedChanges"]   = this.isBufferContainsUncommittedChanges;
+  //   cleanObject["commits"] = this.commitsList.getCleanObject();
+  //   cleanObject["commitUserIsLookingAt"] = this.commitUserIsLookingAt;
+  //   return cleanObject;
+  // }
 
+
+  loadSavedAppData(): void {
+    let appData : any = this.localStorageService.retrieveAppdata();
+    if (appData != null) {
+      this.bufferText = appData.bufferText;
+      let dataCommits : any[] = appData.commits.commits;
+      let constructedCommits : DraftCommit[];
+      constructedCommits = [];
+      for (let dataCommit of dataCommits) {
+        let commit = new DraftCommit(dataCommit.commitString);
+        constructedCommits.push(commit);
+      }
+      this.commitsList = CommitChain.getFromArray(constructedCommits);
+      this.isBufferContainsUncommittedChanges = appData.isBufferContainsUncommittedChanges;
+      this.commitUserIsLookingAt = appData.commitUserIsLookingAt;
+    }
+
+
+  }
 }
