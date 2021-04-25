@@ -1,9 +1,9 @@
 import { Component, OnInit, ElementRef,Renderer2, ViewChild } from '@angular/core';
 
 // @ts-ignore
-import { DraftCommit } from '../classes/draft-commit.ts';
+import { DraftCommit } from '../classes/draft-commit';
 // @ts-ignore
-import { CommitChain } from '../classes/commit-chain.ts';
+import { CommitChain } from '../classes/commit-chain';
 // @ts-ignore
 import { LocalStorageHelper } from '../classes/local-storage-helper.ts';
 // // @ts-ignore

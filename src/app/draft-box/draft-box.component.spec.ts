@@ -27,6 +27,9 @@ describe('DraftBoxComponent', () => {
   let resetToLastCommit : Function;
 
   beforeEach(async () => {
+
+    
+
     await TestBed.configureTestingModule({
       imports: [FormsModule],
       declarations: [ DraftBoxComponent ]
@@ -35,6 +38,7 @@ describe('DraftBoxComponent', () => {
   });
 
   beforeEach(() => {
+    localStorage.removeItem("appData");
     fixture = TestBed.createComponent(DraftBoxComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -82,46 +86,9 @@ describe('DraftBoxComponent', () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   function getUniqueCommitString(id : number) : string {
     return "commit " + id;
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   describe("in regard to the basic functionality of committing changes", ()=> {
