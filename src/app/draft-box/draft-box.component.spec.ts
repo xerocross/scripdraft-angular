@@ -38,10 +38,13 @@ describe('DraftBoxComponent', () => {
   });
 
   beforeEach(() => {
-    localStorage.removeItem("appData");
+    localStorage.clear();
     fixture = TestBed.createComponent(DraftBoxComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+
+    let expectedGuid = "guid";
+    component.guid = expectedGuid;
+    fixture.detectChanges(); // trigger initial data binding
     textareaDebug = fixture.debugElement.query(By.css('textarea.main-textarea'));
     textarea = textareaDebug.nativeElement;
     commitButton = fixture.debugElement.query(By.css('button.commit'));

@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef,Renderer2, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef,Renderer2, ViewChild, Input, SimpleChanges } from '@angular/core';
 
 // @ts-ignore
 import { DraftCommit } from '../classes/draft-commit';
@@ -29,7 +29,8 @@ export class DraftBoxComponent implements OnInit {
     console.log(message);
   }
 
-  guid: string = "";
+  @Input() guid: string = "";
+
   bufferText : string = "";
   commitUserIsLookingAt : number = -1;
   isBufferContainsUncommittedChanges : boolean = false; // to capture whether text of a commit has been changed.
@@ -54,14 +55,12 @@ export class DraftBoxComponent implements OnInit {
     unexpectedCondition : "An unexpected condition has occurred."
   }
 
-  constructor (private rd: Renderer2, private guidService: GuidService, private localStorageService : LocalStorageService) {
+  constructor (private rd: Renderer2, private localStorageService : LocalStorageService) {
     this.commitsList = new CommitChain();
-    this.guidService = guidService;
     this.localStorageService = localStorageService;
   }
 
   ngOnInit(): void {
-    this.guid = this.guidService.getGuid();
     this.loadSavedAppData();
   }
 
@@ -149,7 +148,8 @@ export class DraftBoxComponent implements OnInit {
   saveData () : void {
     let cleanObject : any = this.getCleanObject();
     console.log(cleanObject);
-    this.localStorageService.saveAppData(cleanObject);
+    this.localStorageService.saveDocumentData(this.guid, cleanObject);
+    //.saveAppData(this.guid, cleanObject);
   }
 
   getCleanObject() : any {
@@ -332,7 +332,7 @@ export class DraftBoxComponent implements OnInit {
 
 
   loadSavedAppData(): void {
-    let appData : any = this.localStorageService.retrieveAppdata();
+    let appData : any = this.localStorageService.getDocumentData(this.guid);   ///.retrieveAppdata();
     if (appData != null) {
       this.bufferText = appData.bufferText;
       let dataCommits : any[] = appData.commits.commits;
@@ -346,7 +346,13 @@ export class DraftBoxComponent implements OnInit {
       this.isBufferContainsUncommittedChanges = appData.isBufferContainsUncommittedChanges;
       this.commitUserIsLookingAt = appData.commitUserIsLookingAt;
     }
-
-
   }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.guid) {
+        console.log("new GUID", this.guid);
+        this.loadSavedAppData();
+        this.saveData()
+    }
+}
 }

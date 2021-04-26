@@ -5,7 +5,7 @@ import { AppComponent } from './app.component';
 import { DraftBoxComponent } from './draft-box/draft-box.component';
 import { FormsModule } from '@angular/forms';
 import { HelpComponent } from './help/help.component';
-import { DocumentOpenerComponent } from './document-opener/document-opener.component';
+
 
 @NgModule({
   declarations: [

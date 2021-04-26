@@ -22,12 +22,44 @@
   p {
     margin: 0;
   }
+  .doc-select-label {
+    font-size: 15px;
+    font-weight: bold;
+  }
+  .new-document-button {
+    max-width: 30%;
+    margin: 10px;
+  }
+
+  .doc-choice-form {
+    margin-left: 5%;
+    margin-right: 5%;
+  }
 </style>
 
 <div class="content" role="main">
   <div class="inner-content">
+
     <h1>ScripDraft</h1>
-    <app-draft-box></app-draft-box>
+    <div class="doc-choice-form">
+    <form class="">
+      <div class="form-group">
+      <label for="doc" class="doc-select-label">Choose a Document:</label>
+      <select class="form-control" name="doc" [(ngModel)]="selectedDocument">
+        <option  *ngFor="let document of documentGuids; index as i; first as isFirst" [value]="document"
+          [selected]="document == selectedDocument"
+        >{{ document }}</option>
+      </select>
+      <button 
+        class="form-control btn btn-info new-document-button" 
+        (click)="createNewDocument()" 
+      >
+        new document
+      </button>
+    </div>
+    </form>
+    </div>
+    <app-draft-box [guid]="selectedDocument"></app-draft-box>
     <app-help class="help-comp"></app-help>
   </div>
 </div>
