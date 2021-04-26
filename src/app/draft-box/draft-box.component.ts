@@ -133,15 +133,19 @@ export class DraftBoxComponent implements OnInit {
   }
 
 
-  clearAll() : void {
+  userClearAll() : void {
     if(confirm(this.copyText.confirmDestructiveClearAll)) {
-      this.bufferText = "";
-      this.isBufferContainsUncommittedChanges = false;
-      this.commitUserIsLookingAt = -1;
-      this.isBufferContainsUncommittedChanges = false; 
-      this.commitsList = new CommitChain();
-      this.saveData()
+      this.destructiveClearAll();
+      this.saveData();
     }
+  }
+
+  destructiveClearAll() : void {
+    this.bufferText = "";
+    this.isBufferContainsUncommittedChanges = false;
+    this.commitUserIsLookingAt = -1;
+    this.isBufferContainsUncommittedChanges = false; 
+    this.commitsList = new CommitChain();
   }
 
 
@@ -149,7 +153,6 @@ export class DraftBoxComponent implements OnInit {
     let cleanObject : any = this.getCleanObject();
     console.log(cleanObject);
     this.localStorageService.saveDocumentData(this.guid, cleanObject);
-    //.saveAppData(this.guid, cleanObject);
   }
 
   getCleanObject() : any {
@@ -223,7 +226,7 @@ export class DraftBoxComponent implements OnInit {
 
   handleTextChange(newText : string) {
     this.setIsDirty();
-    let dataObj = this.saveData();
+    this.saveData();
   }
 
 
@@ -345,6 +348,8 @@ export class DraftBoxComponent implements OnInit {
       this.commitsList = CommitChain.getFromArray(constructedCommits);
       this.isBufferContainsUncommittedChanges = appData.isBufferContainsUncommittedChanges;
       this.commitUserIsLookingAt = appData.commitUserIsLookingAt;
+    } else {
+      this.destructiveClearAll();
     }
   }
 
