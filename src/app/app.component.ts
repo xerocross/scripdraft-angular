@@ -27,10 +27,12 @@ export class AppComponent implements OnInit  {
     this.documentGuids = this.localStorageService.getDocumentGuids();
     if (this.documentGuids.length > 0) {
       this.selectedDocument = this.documentGuids[0];
+
     } else {
       let newGuid = this.guidService.getGuid();
       this.selectedDocument = newGuid;
       this.localStorageService.saveDocument(newGuid);
+      this.documentGuids.push(newGuid);
     }
 
 
